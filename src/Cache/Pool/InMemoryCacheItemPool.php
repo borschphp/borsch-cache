@@ -3,16 +3,21 @@
 namespace Borsch\Cache\Pool;
 
 use Borsch\Cache\CacheItem;
+use Borsch\Cache\Trait\HasKeyValidation;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 
 class InMemoryCacheItemPool implements CacheItemPoolInterface
 {
 
+    use HasKeyValidation;
+
     protected array $items = [];
 
     public function getItem(string $key): CacheItemInterface
     {
+        $this->validateKey($key);
+
         return $this->items[$key] ?? new CacheItem($key);
     }
 
@@ -29,6 +34,8 @@ class InMemoryCacheItemPool implements CacheItemPoolInterface
 
     public function hasItem(string $key): bool
     {
+        $this->validateKey($key);
+
         return isset($this->items[$key]);
     }
 
@@ -41,6 +48,8 @@ class InMemoryCacheItemPool implements CacheItemPoolInterface
 
     public function deleteItem(string $key): bool
     {
+        $this->validateKey($key);
+
         unset($this->items[$key]);
 
         return true;

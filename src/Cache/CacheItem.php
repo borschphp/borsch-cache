@@ -31,11 +31,10 @@ class CacheItem implements CacheItemInterface
             return $this->expiration->getTimestamp() > time();
         } elseif (is_int($this->expiration)) {
             return $this->expiration > time();
-        } elseif ($this->expiration === null) {
-            return true;
         }
 
-        return false;
+        // $this->expiration === null
+        return true;
     }
 
     public function set(mixed $value): static

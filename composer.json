@@ -16,13 +16,27 @@
   ],
   "type": "library",
   "require": {
+    "php": "^8.1",
     "psr/cache": "^3.0",
     "psr/simple-cache": "^3.0",
     "psr/log": "^3.0"
   },
+  "require-dev": {
+    "pestphp/pest": "^2.34"
+  },
   "autoload": {
     "psr-4": {
       "Borsch\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "BorschTest\\": "tests/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
     }
   }
 }
