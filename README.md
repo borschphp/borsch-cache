@@ -10,6 +10,33 @@ Via [composer](https://getcomposer.org/) :
 composer require borschphp/cache
 ```
 
+## Usage
+
+```php
+// PSR-16 style
+$cache = new Cache(new InMemoryCacheItemPool());
+$cache->set('foo', 'bar');
+
+$foo = $cahce->get('foo', 'default_value');
+
+$cahce->delete('foo');
+$cache->clear();
+
+// PSR-6 style
+$pool = new InMemoryCacheItemPool();
+$pool->save(new CacheItem('foo', 'bar'));
+
+if ($pool->hasItem('foo')) {
+    $foo = $pool->getItem('foo')->get();
+    
+    $pool->deleteItem('foo');
+}
+
+$pool->clear();
+```
+
+A `LoggerInterface` instance can be given as a second parameter to the `Cache` class to log errors during cache operations.
+
 ## License
 
 The package is licensed under the MIT license.  
