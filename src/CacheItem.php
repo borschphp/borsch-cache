@@ -3,6 +3,7 @@
 namespace Borsch\Cache;
 
 use DateInterval;
+use DateTime;
 use DateTimeInterface;
 use Psr\Cache\CacheItemInterface;
 
@@ -22,18 +23,27 @@ class CacheItem implements CacheItemInterface
 
     public function get(): mixed
     {
-        return $this->value;
+        if ($this->isHit()) {
+            return $this->value;
+        }
+
+        return null;
     }
 
     public function isHit(): bool
     {
-        if ($this->expiration instanceof \DateTimeInterface) {
-            return $this->expiration->getTimestamp() > time();
-        } elseif (is_int($this->expiration)) {
-            return $this->expiration > time();
+        if ($this->value === null) {
+            return false;
         }
 
-        // $this->expiration === null
+        if ($this->expiration instanceof DateTimeInterface) {
+            return $this->expiration->getTimestamp() >= time();
+        }
+
+        if (is_int($this->expiration)) {
+            return $this->expiration >= time();
+        }
+
         return true;
     }
 
@@ -55,7 +65,7 @@ class CacheItem implements CacheItemInterface
     {
         $this->expiration = match (true) {
             is_int($time) => time() + $time,
-            $time instanceof \DateInterval => (new \DateTime())->add($time),
+            $time instanceof DateInterval => (new DateTime())->add($time),
             default => null
         };
 

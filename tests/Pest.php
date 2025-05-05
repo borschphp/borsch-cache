@@ -11,25 +11,7 @@
 |
 */
 
-use Borsch\Cache\Cache;
-use Borsch\Cache\CacheItem;
-use Borsch\Cache\Pool\InMemoryCacheItemPool;
 
-uses()
-    ->beforeEach(function () {
-        $this->pool = new InMemoryCacheItemPool();
-        $this->pool->save(new CacheItem('foo', 'bar'));
-        $this->pool->save(new CacheItem('bar', 'baz'));
-    })
-    ->in('Unit/InMemoryCacheItemPoolTest.php');
-
-uses()
-    ->beforeEach(function () {
-        $this->cache = new Cache(new InMemoryCacheItemPool());
-        $this->cache->set('foo', 'bar');
-        $this->cache->set('bar', 'baz');
-    })
-    ->in('Unit/CacheTest.php');
 
 /*
 |--------------------------------------------------------------------------
@@ -42,9 +24,7 @@ uses()
 |
 */
 
-expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
-});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -56,8 +36,3 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
-
-function something()
-{
-    // ..
-}
