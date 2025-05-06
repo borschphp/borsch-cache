@@ -1,105 +1,147 @@
-<?php
+<?php declare(strict_types=1);
+
+namespace Borsch\Tests\Unit;
 
 use Borsch\Cache\CacheItem;
-use Psr\Cache\CacheItemInterface;
+use Borsch\Cache\Pool\ArrayCacheItemPool;
+use DateInterval;
+use DateTime;
+use DateTimeImmutable;
+use DateTimeInterface;
 
-test('getKey() returns the key', function () {
-    $item = new CacheItem('myKey');
-    expect($item->getKey())->toBe('myKey');
+covers(CacheItem::class, CacheItem::class, ArrayCacheItemPool::class);
+
+it('can be instantiated with key and null value', function () {
+    $item = new CacheItem('test_key', null);
+
+    expect($item->getKey())->toBe('test_key')
+        ->and($item->get())->toBeNull()
+        ->and($item->isHit())->toBeFalse();
 });
 
-test('get() returns the value', function () {
-    $item = new CacheItem('myKey', 'myValue');
-    expect($item->get())->toBe('myValue');
+it('can be instantiated with key, value and no expiration', function () {
+    $item = new CacheItem('test_key', 'test_value');
+
+    expect($item->getKey())->toBe('test_key')
+        ->and($item->get())->toBe('test_value')
+        ->and($item->isHit())->toBeTrue();
 });
 
-test('isHit() validates DateTimeInterface', function () {
-    $item = new CacheItem('myKey', 'myValue', new DateTime(date('Y-m-d H:i:s', strtotime('+1 day'))));
-    expect($item->isHit())->toBeTrue();
-
-    $item = new CacheItem('myKey', 'myValue', new DateTime(date('Y-m-d H:i:s', strtotime('-1 day'))));
-    expect($item->isHit())->toBeFalse();
-
-    $item = new CacheItem('myKey', 'myValue', new DateTime());
-    expect($item->isHit())->toBeFalse();
-});
-
-test('isHit() validates integer', function () {
-    $item = new CacheItem('myKey', 'myValue', strtotime('+1 day'));
-    expect($item->isHit())->toBeTrue();
-
-    $item = new CacheItem('myKey', 'myValue', strtotime('-1 day'));
-    expect($item->isHit())->toBeFalse();
-
-    $item = new CacheItem('myKey', 'myValue', time());
-    expect($item->isHit())->toBeFalse();
-});
-
-test('isHit() validates null', function () {
-    $item = new CacheItem('myKey', 'myValue', null);
-    expect($item->isHit())->toBeTrue();
-});
-
-test('set() returns the CacheItem instance', function () {
-    $item = new CacheItem('myKey', 'myValue');
-    $item_to_test = $item->set('myValue2');
-
-    expect($item_to_test)->toBeInstanceOf(CacheItemInterface::class)->toBe($item)
-        ->and($item_to_test->get())->toBe('myValue2');
-});
-
-test('expiresAt() to set expiration datetime', function () {
-    $item = new CacheItem('myKey', 'myValue');
-
-    $item->expiresAt(new DateTime(date('Y-m-d H:i:s', strtotime('+1 day'))));
-    expect($item->isHit())->toBeTrue();
-
-    $item->expiresAt(new DateTime(date('Y-m-d H:i:s', strtotime('-1 day'))));
-    expect($item->isHit())->toBeFalse();
-});
-
-test('expiresAfter() to set expiration DateInterval', function () {
-    $item = new CacheItem('myKey', 'myValue');
-    $item->expiresAfter(new DateInterval('P1D'));
+it('can be instantiated with timestamp expiration', function () {
+    $expiration = time() + 3600; // 1 hour from now
+    $item = new CacheItem('test_key', 'test_value', $expiration);
 
     expect($item->isHit())->toBeTrue();
 });
 
-test('expiresAfter() to set expiration negative DateInterval', function () {
-    $interval = new DateInterval('P1D');
-    $interval->invert = true;
-
-    $item = new CacheItem('myKey', 'myValue');
-    $item->expiresAfter($interval);
-
-    expect($item->isHit())->toBeFalse();
-});
-
-test('expiresAfter() to set expiration integer', function () {
-    $item = new CacheItem('myKey', 'myValue');
-    $item->expiresAfter(3600);
+it('can be instantiated with DateTime expiration', function () {
+    $expiration = (new DateTime())->add(new DateInterval('PT1H')); // 1 hour from now
+    $item = new CacheItem('test_key', 'test_value', $expiration);
 
     expect($item->isHit())->toBeTrue();
 });
 
-test('expiresAfter() to set expiration negative integer', function () {
-    $item = new CacheItem('myKey', 'myValue');
-    $item->expiresAfter(-3600);
+it('returns false for isHit when expired with timestamp', function () {
+    $expiration = time() - 60; // 1 minute ago
+    $item = new CacheItem('test_key', 'test_value', $expiration);
 
     expect($item->isHit())->toBeFalse();
 });
 
-test('expiresAfter() to set expiration null', function () {
-    $item = new CacheItem('myKey', 'myValue');
-    $item->expiresAfter(null);
+it('returns false for isHit when expired with DateTime', function () {
+    $expiration = (new DateTime())->sub(new DateInterval('PT1M')); // 1 minute ago
+    $item = new CacheItem('test_key', 'test_value', $expiration);
 
-    expect($item->isHit())->toBeTrue();
+    expect($item->isHit())->toBeFalse();
 });
 
-test('expiresAfter() to set expiration null after a defined expiration', function () {
-    $item = new CacheItem('myKey', 'myValue');
-    $item->expiresAfter(-3600);
+it('returns false for isHit with null value regardless of expiration', function () {
+    $expiration = time() + 3600; // 1 hour from now
+    $item = new CacheItem('test_key', null, $expiration);
+
     expect($item->isHit())->toBeFalse();
-    $item->expiresAfter(null);
-    expect($item->isHit())->toBeTrue();
+});
+
+it('sets value and returns self', function () {
+    $item = new CacheItem('test_key', null);
+    $result = $item->set('new_value');
+
+    expect($result)->toBe($item)
+        ->and($item->get())->toBe('new_value');
+});
+
+it('expires after DateInterval', function () {
+    $item = new class('test_key', 'test_value') extends CacheItem {
+        public function getExpiration(): DateTimeInterface { return $this->expiration; }
+    };
+    $result = $item->expiresAfter(new DateInterval('PT30S')); // 30 seconds
+
+    expect($result)->toBe($item);
+
+    // Should expire in approximately 30 seconds
+    $expiration = $item->getExpiration();
+    expect($expiration)->toBeInstanceOf(DateTime::class);
+
+    $diff = $expiration->getTimestamp() - time();
+    expect($diff)->toBeGreaterThan(29)->toBeLessThan(31);
+});
+
+it('expires after seconds', function () {
+    $item = new class('test_key', 'test_value') extends CacheItem {
+        public function getExpiration(): int { return $this->expiration; }
+    };
+    $result = $item->expiresAfter(60); // 60 seconds
+
+    expect($result)->toBe($item);
+
+    // Should now be a timestamp roughly 60 seconds in the future
+    $expiration = $item->getExpiration();
+    expect(is_int($expiration))->toBeTrue();
+
+    $diff = $expiration - time();
+    expect($diff)->toBeGreaterThan(59)->toBeLessThan(61);
+});
+
+it('expires after null (removes expiration)', function () {
+    $item = new class('test_key', 'test_value') extends CacheItem {
+        public function getExpiration() { return $this->expiration; }
+    };
+    $result = $item->expiresAfter(null);
+
+    expect($result)->toBe($item)
+        ->and($item->getExpiration())->toBeNull();
+});
+
+it('expires at DateTime', function () {
+    $date = new DateTime('tomorrow');
+    $item = new class('test_key', 'test_value', $date) extends CacheItem {
+        public function getExpiration() { return $this->expiration; }
+    };
+    $result = $item->expiresAt($date);
+
+    expect($result)->toBe($item)
+        ->and($item->getExpiration())->toBeInstanceOf(DateTime::class)
+        ->and($item->getExpiration()->getTimestamp())->toBe($date->getTimestamp());
+});
+
+it('expires at DateTimeImmutable', function () {
+    $date = new DateTimeImmutable('tomorrow');
+    $item = new class('test_key', 'test_value') extends CacheItem {
+        public function getExpiration() { return $this->expiration; }
+    };
+    $result = $item->expiresAt($date);
+
+    expect($result)->toBe($item)
+        ->and($item->getExpiration())->toBeInstanceOf(DateTimeImmutable::class)
+        ->and($item->getExpiration()->getTimestamp())->toBe($date->getTimestamp());
+});
+
+it('expires at null (removes expiration)', function () {
+    $item = new class('test_key', 'test_value', new DateTime('tomorrow')) extends CacheItem {
+        public function getExpiration() { return $this->expiration; }
+    };
+    $result = $item->expiresAt(null);
+
+    expect($result)->toBe($item)
+        ->and($item->getExpiration())->toBeNull();
 });
