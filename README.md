@@ -14,16 +14,16 @@ composer require borschphp/cache
 
 ```php
 // PSR-16 style
-$cache = new Cache(new InMemoryCacheItemPool());
+$cache = new Cache(new ArrayCacheItemPool());
 $cache->set('foo', 'bar');
 
-$foo = $cahce->get('foo', 'default_value');
+$foo = $cache->get('foo', 'default_value');
 
 $cahce->delete('foo');
 $cache->clear();
 
 // PSR-6 style
-$pool = new InMemoryCacheItemPool();
+$pool = new ArrayCacheItemPool();
 $pool->save(new CacheItem('foo', 'bar'));
 
 if ($pool->hasItem('foo')) {
