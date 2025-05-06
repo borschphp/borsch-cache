@@ -19,7 +19,7 @@ $cache->set('foo', 'bar');
 
 $foo = $cache->get('foo', 'default_value');
 
-$cahce->delete('foo');
+$cache->delete('foo');
 $cache->clear();
 
 // PSR-6 style
