@@ -64,7 +64,8 @@ class ArrayCacheItemPool implements CacheItemPoolInterface
     {
         $this->validateKey($key);
 
-        return $this->items->containsKey($key);
+        return $this->items->containsKey($key) ||
+            $this->deferred->containsKey($key);
     }
 
     /**
